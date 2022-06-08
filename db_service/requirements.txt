@@ -1,0 +1,6 @@
+numpy
+grpcio
+protobuf
+requests
+sqlalchemy
+pymysql

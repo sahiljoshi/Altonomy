@@ -1,0 +1,55 @@
+syntax = "proto3";
+
+package market_data ;
+
+service MarketDataService {
+    rpc GetKlineData(request) returns (response) {}
+    rpc GetOrderBookData(ob_request) returns (ob_response) {}
+}
+
+// input
+message request {
+    string exchange = 1 ;
+    string symbol  = 2 ;
+    int64 start_time = 3 ;
+    int64 end_time = 4 ;
+    string duration = 5 ;   // "1m , 5m , 15m, 30m, 1h , 2h , 3h, 1d "  currently supported only  these
+}
+
+// input
+message ob_request {
+    string exchange = 1 ;
+    string symbol  = 2 ;
+    int32 depth = 5 ;
+}
+
+message OHLCV {
+    string open = 1 ;
+    string high = 2 ;
+    string low = 3 ;
+    string close  = 4 ;
+    string start_time = 5 ;
+    string volume = 6 ;
+}
+
+// output
+message response {
+    bool is_success = 1   ;
+    repeated OHLCV payload  = 2 ;
+}
+
+// output
+message ob_response {
+    repeated priceLevel bids  = 1 ;
+    repeated  priceLevel asks = 2 ;
+    string lastUpdateId = 3 ;
+    bool isSuccess = 4 ;
+}
+
+// output
+message priceLevel {
+    string price  = 1 ;
+    string quantity = 2 ;
+
+}
+

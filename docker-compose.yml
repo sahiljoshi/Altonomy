@@ -1,0 +1,46 @@
+version: '4.9.0'
+
+services:
+
+  db_service:
+
+    build: .
+    command: python3 -u /usr/app/db_service.py
+    volumes:
+      - ./market_data_proto_pb2.py:/usr/app/market_data_proto_pb2.py
+      - ./market_data_proto_pb2_grpc.py:/usr/app/market_data_proto_pb2_grpc.py
+      - ./db_service/:/usr/app/
+    depends_on:
+      - test_mysql_db
+
+
+  test_mysql_db:
+    container_name: "test_mysql_db"
+    image: mysql:8
+    ports:
+      - '3307:3306'
+    volumes:
+      - ~/apps/mysql:/var/lib/mysql
+    environment:
+      - MYSQL_ROOT_PASSWORD=the_passwd
+      - MYSQL_PASSWORD=the_passwd
+      - MYSQL_USER=user
+      - MYSQL_DATABASE=marketData
+
+
+  market_data_connector:
+    container_name: "market_data_connector"
+    build: .
+    command: python3 -u /usr/app/main.py
+    ports:
+      - '9001:13000'
+    stdin_open: true
+    tty: true
+    volumes:
+      - ./market_data_proto_pb2.py:/usr/app/market_data_proto_pb2.py
+      - ./market_data_proto_pb2_grpc.py:/usr/app/market_data_proto_pb2_grpc.py
+      - ./market_data_connector/:/usr/app/
+
+
+
+
