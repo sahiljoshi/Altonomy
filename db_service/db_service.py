@@ -4,7 +4,7 @@ import time
 import sqlalchemy as db
 import sys
 # specify database configurations
-from sqlalchemy import MetaData, Integer, String, Column, Table
+from sqlalchemy import MetaData, Integer, String, Column, Table, Float, Float
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 
@@ -21,12 +21,12 @@ Base = declarative_base()
 class OHLCV(Base):
     __tablename__ = 'ohlc_data'
     id = Column(Integer, primary_key=True)
-    open = Column(String)
-    high = Column(String)
-    low = Column(String)
-    close = Column(String)
-    start_time = Column(String)
-    volume = Column(String)
+    open = Column(Float)
+    high = Column(Float)
+    low = Column(Float)
+    close = Column(Float)
+    start_time = Column(Integer)
+    volume = Column(Float)
     symbol = Column(String)
     exchange = Column(String)
 
@@ -34,11 +34,11 @@ class OHLCV(Base):
 class BidAsk(Base):
     __tablename__ = 'bid_ask_data'
     id = Column(Integer, primary_key=True)
-    bid = Column(String)
-    ask = Column(String)
-    bid_qty = Column(String)
-    ask_qty = Column(String)
-    last_update_time = Column(String)
+    bid = Column(Float)
+    ask = Column(Float)
+    bid_qty = Column(Float)
+    ask_qty = Column(Float)
+    last_update_time = Column(Integer)
     symbol = Column(String)
     exchange = Column(String)
 
@@ -75,12 +75,12 @@ def initDb():
         Column('id', Integer, primary_key=True),
         Column('symbol', String(32)),
         Column('exchange', String(32)),
-        Column('open', String(32)),
-        Column('high', String(32)),
-        Column('low', String(32)),
-        Column('close', String(32)),
-        Column('volume', String(32)),
-        Column('start_time', String(32)),
+        Column('open', Float),
+        Column('high', Float),
+        Column('low', Float),
+        Column('close', Float),
+        Column('volume', Float),
+        Column('start_time', Integer),
     )
 
     bid_ask_data = Table(
@@ -88,11 +88,11 @@ def initDb():
         Column('id', Integer, primary_key=True),
         Column('symbol', String(32)),
         Column('exchange', String(32)),
-        Column('bid', String(32)),
-        Column('ask', String(32)),
-        Column('bid_qty', String(32)),
-        Column('ask_qty', String(32)),
-        Column('last_update_time', String(32)),
+        Column('bid', Float),
+        Column('ask', Float),
+        Column('bid_qty', Float),
+        Column('ask_qty', Float),
+        Column('last_update_time', Integer),
 
     )
 
@@ -100,13 +100,9 @@ def initDb():
     return engine1
 
 
-def query_for_data(engine):
+def query_for_data(engine, exchange, symbol, duration):
     channel = grpc.insecure_channel('market_data_connector:13000')
     stub = market_data_proto_pb2_grpc.MarketDataServiceStub(channel)
-
-    exchange = "BINANCE"
-    symbol = "BTCUSDT"
-    duration = "15m"
 
     end_time = int(time.time() * 1000)
     start_time = end_time - 60 * 15 * 45 * 1000;
@@ -144,7 +140,7 @@ def query_for_ob_data(engine):
     r = stub.GetOrderBookData(request)
     Session = sessionmaker(bind=engine)
     session = Session()
-    l1 = BidAsk(bid=r.bids[0].price, ask=r.asks[0].price, last_update_time=r.lastUpdateId,
+    l1 = BidAsk(bid=r.bids[0].price, ask=r.asks[0].price, last_update_time=int(r.lastUpdateId),
                 bid_qty=r.bids[0].quantity, ask_qty=r.asks[0].quantity, symbol=symbol, exchange=exchange)
     session.add(l1)
     session.commit()
@@ -183,8 +179,11 @@ class RepeatedTimer(object):
 if __name__ == '__main__':
     # print_hi('PyCharm re ')
     engine = initDb()
-    rt = RepeatedTimer(1, query_for_ob_data, engine)
+    exchange = "BINANCE"
+    symbol = "BTCUSDT"
+    duration = "15m"
+    rt = RepeatedTimer(1, query_for_ob_data, engine, exchange, symbol, duration)
     try:
-        time.sleep(300)  # your long-running job goes here...
+        time.sleep(30000)
     finally:
         rt.stop()

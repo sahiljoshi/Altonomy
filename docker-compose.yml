@@ -42,5 +42,27 @@ services:
       - ./market_data_connector/:/usr/app/
 
 
+  grafana:
+    image: grafana/grafana:latest
+    container_name: grafana
+    ports:
+      - "3000:3000"
+    links:
+      - test_mysql_db
+    volumes:
+      - /srv/docker/grafana/data:/usr/app/grafana
+
+
+  jupyter_plot:
+    image: jupyter/base-notebook:python-3.9.6
+    container_name: jupyter_plot
+    command: runipy /usr/app/PlotGenerator.ipynb
+    volumes:
+      - ./jupyter_plot/config_docker.py:/usr/app/config.py
+      - ./market_data_proto_pb2.py:/usr/app/market_data_proto_pb2.py
+      - ./market_data_proto_pb2_grpc.py:/usr/app/market_data_proto_pb2_grpc.py
+      -  ./jupyter_plot/PlotGenerator.ipynb:/usr/app/PlotGenerator.ipynb
+
+
 
 
